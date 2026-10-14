@@ -88,6 +88,14 @@ export function isThrottle(error: { type: string; status?: number }, statuses: S
   return error.status !== undefined && statuses.has(error.status)
 }
 
+// Bedrock's content filter intermittently kills a stream with "Provider blocked
+// the response"; a plain retry of the same request usually passes. Distinct from
+// throttling: no cooldown, no model swap — just retry a few times.
+export function isContentBlock(error: { type?: string; message?: string }): boolean {
+  const text = `${error.type ?? ""} ${error.message ?? ""}`.toLowerCase()
+  return text.includes("blocked the response") || text.includes("provider.blocked")
+}
+
 const MODEL_PATH = /(\/model\/)([^/]+)(\/)/
 
 export function rewriteUrl(url: string, replacement: string): string | undefined {
@@ -115,6 +123,13 @@ const plugin: Plugin.Plugin = {
 
     await ctx.session.hook("retry", (event) => {
       if (event.model.providerID !== opts.providerID) return
+      if (isContentBlock(event.error) && !isThrottle(event.error, opts.statuses)) {
+        if (event.attempt <= 3) {
+          event.decision = { retry: true, delay: opts.retryDelayMs }
+          log(`content-block retry for ${event.sessionID}: attempt ${event.attempt}`)
+        }
+        return
+      }
       if (!isThrottle(event.error, opts.statuses)) return
       const now = Date.now()
       const actual = lastSent.get(event.sessionID)?.model ?? event.model.id
