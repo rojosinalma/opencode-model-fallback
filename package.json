@@ -1,0 +1,11 @@
+{
+  "name": "opencode-model-fallback",
+  "version": "0.1.0",
+  "description": "OpenCode plugin: swaps a rate-limited model for the next one in a cascade, mid-turn, on the wire",
+  "type": "module",
+  "license": "MIT",
+  "main": "index.ts",
+  "devDependencies": {
+    "@opencode/plugin": "latest"
+  }
+}
