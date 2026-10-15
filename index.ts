@@ -29,12 +29,8 @@ export type Options = {
 export function resolveOptions(raw: Readonly<Record<string, any>> = {}): Options {
   return {
     providerID: String(raw.provider_id ?? "amazon-bedrock"),
-    cascade: (raw.cascade as string[] | undefined) ?? [
-      "global.anthropic.claude-fable-5-1",
-      "global.anthropic.claude-fable-5",
-      "global.anthropic.claude-opus-5-5",
-      "global.anthropic.claude-opus-5",
-    ],
+    // Empty by default: without a cascade the plugin only forces retries and never swaps.
+    cascade: Array.isArray(raw.cascade) ? (raw.cascade as unknown[]).filter((m): m is string => typeof m === "string") : [],
     cooldownS: Number(raw.cooldown_s ?? 120),
     sameModelAttempts: Number(raw.same_model_attempts ?? 2),
     retryDelayMs: Number(raw.retry_delay_ms ?? 1500),

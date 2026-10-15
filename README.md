@@ -10,13 +10,13 @@ and auth is a bearer token, so a path rewrite is safe.
 
 ## Install
 
-Clone into the global plugins directory; it is auto-discovered and runs on its defaults:
+Clone into the global plugins directory; it is auto-discovered. Without a `cascade` it only forces retries on throttling and never swaps models:
 
 ```sh
 git clone https://github.com/rojosinalma/opencode-model-fallback ~/.config/opencode/plugins/model-fallback
 ```
 
-To change options, reference **that same path** from `opencode.jsonc` — never a second copy, or two
+To set the cascade and other options, reference **that same path** from `opencode.jsonc` — never a second copy, or two
 instances will both rewrite requests:
 
 ```jsonc
@@ -41,7 +41,7 @@ No runtime dependencies (`@opencode/plugin` is imported as types only).
 | key | default | meaning |
 |---|---|---|
 | `provider_id` | `amazon-bedrock` | provider whose requests are inspected |
-| `cascade` | four Anthropic-on-Bedrock ids (see `resolveOptions`) | ordered model ids to fall back through; the one the request is already on is skipped |
+| `cascade` | `[]` (retry only, no swap) | ordered model ids to fall back through; the one the request is already on is skipped |
 | `cooldown_s` | `120` | how long a throttled model stays swapped out |
 | `same_model_attempts` | `2` | 429s on one model before it is put in cooldown |
 | `retry_delay_ms` | `1500` | delay forced on the retry |
@@ -59,5 +59,5 @@ No runtime dependencies (`@opencode/plugin` is imported as types only).
 ## Caveats
 
 - Wire-only: cost accounting and the UI stay attributed to the configured model.
-- The default `cascade` is the author's; set your own.
+- With an empty `cascade` nothing is ever rewritten; the retry hook still runs.
 - Loaded per location boot; running locations keep the plugin set they started with.
