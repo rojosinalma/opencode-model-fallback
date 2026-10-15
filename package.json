@@ -2,10 +2,24 @@
   "name": "opencode-model-fallback",
   "version": "0.2.0",
   "description": "OpenCode plugin: swaps a rate-limited model for the next one in a cascade, mid-turn, on the wire",
-  "type": "module",
+  "author": "rojosinalma",
   "license": "MIT",
+  "type": "module",
   "main": "index.ts",
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "ai-agents",
+    "rate-limiting",
+    "failover",
+    "aws-bedrock"
+  ],
+  "homepage": "https://github.com/rojosinalma/opencode-model-fallback",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rojosinalma/opencode-model-fallback"
+  },
   "devDependencies": {
-    "@opencode/plugin": "latest"
+    "@opencode/plugin": "2.0.30"
   }
 }
