@@ -1,4 +1,5 @@
-// Type-only import: Bun resolves bare specifiers from the symlink's real path, where no node_modules exists.
+// Type-only import: the plugin directory may have no node_modules of its own, so nothing
+// from @opencode/plugin is needed at runtime.
 import type { Plugin } from "@opencode/plugin"
 
 // Keeps a turn alive when the provider throttles the session's model: a 429 puts that
@@ -6,7 +7,7 @@ import type { Plugin } from "@opencode/plugin"
 // outgoing request for a cooled model is transparently rewritten (URL + body modelId) to
 // the first available model in the configured cascade, skipping the model the request was
 // already on. The session's configured model, history and UI are untouched — the swap
-// exists only on the wire and in the journal log.
+// exists only on the wire and in the server log.
 //
 // Scope: Bedrock-style routes where the model id sits in the URL path
 // (`/model/<id>/converse-stream`) and auth is a bearer token (no request signing), so a
@@ -50,7 +51,7 @@ const cooldowns = new Map<string, number>()
 const MAX_TRACKED_SESSIONS = 500
 const lastSent = new Map<string, { model: string; at: number }>()
 
-function recordSent(sessionID: string, model: string, now: number): void {
+export function recordSent(sessionID: string, model: string, now: number): void {
   if (lastSent.size >= MAX_TRACKED_SESSIONS && !lastSent.has(sessionID)) {
     let oldestKey: string | undefined
     let oldestAt = Infinity
@@ -63,6 +64,18 @@ function recordSent(sessionID: string, model: string, now: number): void {
     if (oldestKey) lastSent.delete(oldestKey)
   }
   lastSent.set(sessionID, { model, at: now })
+}
+
+export function lastSentModel(sessionID: string): string | undefined {
+  return lastSent.get(sessionID)?.model
+}
+
+export function trackedSessions(): number {
+  return lastSent.size
+}
+
+export function startCooldown(model: string, now: number, cooldownS: number): void {
+  cooldowns.set(model, now + cooldownS * 1000)
 }
 
 export function cooling(model: string, now: number): boolean {
@@ -105,6 +118,21 @@ export function modelFromUrl(url: string): string | undefined {
   return match ? decodeURIComponent(match[2]) : undefined
 }
 
+// Replaces the top-level `modelId` of a JSON body; anything else (non-JSON, unreadable,
+// no modelId) is returned unchanged.
+export function rewriteBody(body: string, replacement: string): string {
+  try {
+    const parsed = JSON.parse(body)
+    if (parsed && typeof parsed === "object" && "modelId" in parsed) {
+      parsed.modelId = replacement
+      return JSON.stringify(parsed)
+    }
+  } catch {
+    // Non-JSON body: send it through unchanged.
+  }
+  return body
+}
+
 const plugin: Plugin.Plugin = {
   id: "model-fallback",
   async setup(ctx) {
@@ -113,7 +141,7 @@ const plugin: Plugin.Plugin = {
     const debug = (msg: string) => opts.debug && log(msg)
 
     for (const model of opts.testCooldown) {
-      cooldowns.set(model, Date.now() + opts.cooldownS * 1000)
+      startCooldown(model, Date.now(), opts.cooldownS)
       log(`test_cooldown: ${model} cooling for ${opts.cooldownS}s`)
     }
 
@@ -128,9 +156,9 @@ const plugin: Plugin.Plugin = {
       }
       if (!isThrottle(event.error, opts.statuses)) return
       const now = Date.now()
-      const actual = lastSent.get(event.sessionID)?.model ?? event.model.id
+      const actual = lastSentModel(event.sessionID) ?? event.model.id
       if (event.attempt >= opts.sameModelAttempts) {
-        cooldowns.set(actual, now + opts.cooldownS * 1000)
+        startCooldown(actual, now, opts.cooldownS)
         log(`throttled: ${actual} cooling for ${opts.cooldownS}s (session ${event.sessionID}, attempt ${event.attempt})`)
       }
       const fallbackReady = pickReplacement(opts.cascade, actual, now) !== undefined
@@ -160,14 +188,9 @@ const plugin: Plugin.Plugin = {
         if (!newUrl) return
         let body: string | undefined
         try {
-          body = await event.request.text()
-          const parsed = JSON.parse(body)
-          if (parsed && typeof parsed === "object" && "modelId" in parsed) {
-            parsed.modelId = replacement
-            body = JSON.stringify(parsed)
-          }
+          body = rewriteBody(await event.request.text(), replacement)
         } catch {
-          // Non-JSON or unreadable body: send it through unchanged.
+          // Unreadable body: send the request through with no body change.
         }
         event.request = new Request(newUrl, {
           method: event.request.method,
