@@ -38,4 +38,4 @@ All notable changes to this project are documented here. The format follows
 
 [Unreleased]: https://github.com/rojosinalma/opencode-model-fallback/compare/v0.2.0...HEAD
 [0.2.0]: https://github.com/rojosinalma/opencode-model-fallback/releases/tag/v0.2.0
-[0.1.0]: https://github.com/rojosinalma/opencode-model-fallback/compare/cd6b840...b2b8529
+[0.1.0]: https://github.com/rojosinalma/opencode-model-fallback/compare/60f2c5c...555226e
