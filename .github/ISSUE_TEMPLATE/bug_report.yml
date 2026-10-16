@@ -1,0 +1,42 @@
+name: Bug report
+description: Something does not work as documented
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for the report. Remove provider credentials and any private model ids you do not want public from logs before pasting.
+  - type: input
+    id: version
+    attributes:
+      label: Plugin version
+      description: "`version` in `package.json` of your clone, or the release tag."
+      placeholder: v0.2.0
+    validations:
+      required: true
+  - type: input
+    id: opencode
+    attributes:
+      label: OpenCode and Bun versions
+      placeholder: opencode 2.0.30 / bun 1.4.2
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, what you got.
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Plugin options
+      description: The `options` of the `plugins[]` entry in `opencode.jsonc`.
+      render: jsonc
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: The `[model-fallback]` lines from the OpenCode server log around the problem.
+      render: text

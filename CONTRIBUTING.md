@@ -18,7 +18,7 @@ server.
 ## Tests
 
 ```sh
-bun install   # only for the @opencode/plugin types
+bun install --frozen-lockfile   # only for the @opencode/plugin types
 bun test
 ```
 
@@ -40,15 +40,25 @@ classification. The hooks themselves are verified against a live server (step 3 
 
 - Plain, descriptive commit messages in the imperative ("Skip cooling models when picking a
   replacement"). No attribution trailers.
+- Every commit is GPG-signed (`git config commit.gpgsign true`); unsigned commits are not merged.
 - One logical change per commit; a PR explains the behaviour change and names the option it adds or
   alters.
 - Run `bun test` before pushing.
 
 ## Documentation
 
-- `README.md` — what it is, requirements, setup, licence. Nothing else goes there.
+- `README.md` — what it is, requirements, installation, usage, development, licence. Nothing else
+  goes there.
+- `CHANGELOG.md` — Keep a Changelog; every behaviour or option change gets a line under
+  `[Unreleased]`.
+- `SECURITY.md` — how to report a vulnerability; `CODE_OF_CONDUCT.md` — Contributor Covenant 2.1.
 - `docs/configuration.md` — every option, its default and meaning; how to choose a cascade.
 - `docs/SDD.md` — design: hooks, data flow, state, decisions and rationale, operations.
 - `docs/troubleshooting.md` — symptoms, causes and the log line catalogue.
 
 A change in behaviour updates the matching doc in the same commit.
+
+## Releasing
+
+Bump `version` in `package.json`, move the `[Unreleased]` changelog entries under a dated section,
+commit, create a signed tag `vX.Y.Z` and a GitHub release whose notes are that changelog section.

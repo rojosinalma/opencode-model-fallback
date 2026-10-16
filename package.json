@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "description": "OpenCode plugin: swaps a rate-limited model for the next one in a cascade, mid-turn, on the wire",
   "author": "rojosinalma",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "main": "index.ts",
   "scripts": {
